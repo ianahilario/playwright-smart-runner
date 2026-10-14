@@ -19,7 +19,7 @@ const gitEnv = {
 describe('git diff and playwright', () => {
   it('diffs from the merge base and runs the selected tests', { timeout: 180_000 }, () => {
     const root = mkdtempSync(path.join(tmpdir(), 'playwright-smart-runner-'));
-    cpSync(path.join(packageRoot, 'sample'), root, { recursive: true });
+    cpSync(path.join(packageRoot, 'todomvc'), root, { recursive: true });
     symlinkSync(path.join(packageRoot, 'node_modules'), path.join(root, 'node_modules'), 'dir');
 
     git(root, ['init', '-b', 'main']);
@@ -31,19 +31,19 @@ describe('git diff and playwright', () => {
     git(root, ['add', 'main-only.txt']);
     git(root, ['commit', '-m', 'main moves ahead']);
     git(root, ['checkout', 'feature']);
-    writeFileSync(path.join(root, 'src/checkout/pay.ts'), 'export const amount = 2;\n');
-    git(root, ['add', 'src/checkout/pay.ts']);
-    git(root, ['commit', '-m', 'change checkout']);
+    writeFileSync(path.join(root, 'src/todos/list.ts'), 'export const storageKey = "todos-updated";\n');
+    git(root, ['add', 'src/todos/list.ts']);
+    git(root, ['commit', '-m', 'change todos']);
 
     const changed = listChangedPaths(root, 'main');
-    assert.ok(changed.includes('src/checkout/pay.ts'));
+    assert.ok(changed.includes('src/todos/list.ts'));
     assert.equal(changed.includes('main-only.txt'), false);
 
     const listed = runRunner(root, ['--list']);
     assert.equal(listed.status, 0, listed.stderr);
-    assert.match(listed.stdout, /^tests\/checkout\/$/m);
-    assert.match(listed.stdout, /^tests\/auth\.spec\.ts:\d+$/m);
-    assert.doesNotMatch(listed.stdout, /other\.spec\.ts/);
+    assert.match(listed.stdout, /^tests\/todos\/$/m);
+    assert.match(listed.stdout, /^tests\/smoke\.spec\.ts:\d+$/m);
+    assert.doesNotMatch(listed.stdout, /filters\.spec\.ts/);
 
     const printed = runRunner(root);
     assert.equal(printed.status, 0, printed.stderr);
@@ -57,7 +57,14 @@ describe('git diff and playwright', () => {
     assert.equal(playwright.status, 0, `${playwright.stdout}\n${playwright.stderr}`);
 
     const hits = readRan(ran);
-    assert.deepEqual(hits, ['completes checkout', 'pays with a card', 'signs in', 'signs out']);
+    assert.deepEqual(hits, [
+      'adds a todo',
+      'clears completed todos',
+      'completes a todo',
+      'counts the remaining todos',
+      'shows the new todo field',
+      'starts with no todos',
+    ]);
   });
 });
 

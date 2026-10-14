@@ -47,51 +47,70 @@ export default defineConfig({
 
 A missing config file, `testDir`, or a tag, directory, spec, or title that this run uses exits 1 and prints no arguments.
 
-## Run the selection
-
-```bash
-args=$(npx playwright-smart-runner)
-status=$?
-if [ "$status" -ne 0 ]; then
-  exit "$status"
-fi
-if [ -n "$args" ]; then
-  eval "npx playwright test $args"
-fi
-```
-
-A mapped checkout change can print:
-
-```text
-tests/checkout/ tests/auth.spec.ts:12 tests/auth.spec.ts:40
-```
-
-which runs as:
-
-```bash
-npx playwright test tests/checkout/ tests/auth.spec.ts:12 tests/auth.spec.ts:40
-```
-
-`tests/checkout/` runs every test in that directory. `tests/auth.spec.ts:12` runs only the test at that line. Extra Playwright flags go on the same command:
-
-```bash
-eval "npx playwright test $args --project=chromium"
-```
-
-`--list` prints the same arguments, one per line.
-
-The empty check is required. An ignore-only diff exits 0 with no output, and `npx playwright test` without arguments would run the whole suite. A missing config value also exits 1 with no output, so check the status before treating empty output as a skip.
-
-## Sample
-
-`sample/` is a small Playwright app used by the end-to-end test. It maps `src/checkout/**` to `tests/checkout/` and always runs `@smoke`.
-
 ## CI
 
-The diff uses `git merge-base` against the base branch, then `git diff` from that commit. It does not diff against the tip of `main`. A shallow checkout often does not contain the merge base:
+The command lists changes on your branch since the commit where it split from the base branch. Later commits on that base branch are left out. A CI checkout often keeps only the latest commit, so the split commit is missing and the command fails. Fetch the base branch history first, then pass that ref with `--base`.
 
-```bash
-git fetch --unshallow origin main
+GitHub Actions, on a pull request:
+
+```yaml
+name: tests
+on:
+  pull_request:
+
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Run changed tests
+        run: |
+          TEST_RUN_LIST=$(npx playwright-smart-runner --base "origin/${{ github.base_ref }}")
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            exit "$status"
+          fi
+          if [ -n "$TEST_RUN_LIST" ]; then
+            eval "npx playwright test $TEST_RUN_LIST"
+          fi
 ```
 
-`--base origin/main` works only after that ref has been fetched.
+`fetch-depth: 0` downloads every branch, including the pull request base. `github.base_ref` is that base branch name, such as `main`.
+
+Jenkins:
+
+```groovy
+pipeline {
+  agent any
+  stages {
+    stage('Run changed tests') {
+      steps {
+        sh '''
+          if [ "$(git rev-parse --is-shallow-repository)" = true ]; then
+            git fetch --unshallow origin main
+          else
+            git fetch origin main
+          fi
+          TEST_RUN_LIST=$(npx playwright-smart-runner --base origin/main)
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            exit "$status"
+          fi
+          if [ -n "$TEST_RUN_LIST" ]; then
+            eval "npx playwright test $TEST_RUN_LIST"
+          fi
+        '''
+      }
+    }
+  }
+}
+```
+
+`--unshallow` fills in the missing history when the Git plugin used a shallow clone. A full clone only needs `git fetch origin main`.

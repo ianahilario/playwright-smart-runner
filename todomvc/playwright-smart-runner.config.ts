@@ -7,8 +7,8 @@ export default {
   unmappedChangeRun: ['@smoke'],
   runMapping: [
     {
-      changedPaths: ['src/checkout/**'],
-      runTests: ['tests/checkout/', 'completes checkout'],
+      changedPaths: ['src/todos/**'],
+      runTests: ['tests/todos/', 'adds a todo'],
     },
   ],
 };
