@@ -1,6 +1,8 @@
 # playwright-smart-runner
 
-Print the Playwright arguments for tests affected by changes since a base branch. The command does not launch Playwright.
+Lists tests based on configured mapping for changes. The command does not launch Playwright.
+
+[npm package](https://www.npmjs.com/package/playwright-smart-runner)
 
 ```bash
 npx playwright-smart-runner

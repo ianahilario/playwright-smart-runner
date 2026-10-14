@@ -1,7 +1,12 @@
 {
   "name": "playwright-smart-runner",
   "version": "0.1.0",
-  "description": "Print the Playwright tests affected by changes since a base branch.",
+  "description": "Lists tests based on configured mapping for changes.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ianahilario/playwright-smart-runner.git"
+  },
+  "homepage": "https://www.npmjs.com/package/playwright-smart-runner",
   "type": "module",
   "bin": {
     "playwright-smart-runner": "./dist/cli.js"
