@@ -1,0 +1,36 @@
+{
+  "name": "playwright-smart-runner",
+  "version": "0.1.0",
+  "description": "Print the Playwright tests affected by changes since a base branch.",
+  "type": "module",
+  "bin": {
+    "playwright-smart-runner": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "node --import tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "jiti": "^2.6.1",
+    "picomatch": "^4.0.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^24.6.2",
+    "@types/picomatch": "^4.0.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}
