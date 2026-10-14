@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, symlinkSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
@@ -19,8 +19,8 @@ const gitEnv = {
 describe('git diff and playwright', () => {
   it('diffs from the merge base and runs the selected tests', { timeout: 180_000 }, () => {
     const root = mkdtempSync(path.join(tmpdir(), 'playwright-smart-runner-'));
+    cpSync(path.join(packageRoot, 'sample'), root, { recursive: true });
     symlinkSync(path.join(packageRoot, 'node_modules'), path.join(root, 'node_modules'), 'dir');
-    writeProject(root);
 
     git(root, ['init', '-b', 'main']);
     git(root, ['add', '.']);
@@ -60,58 +60,6 @@ describe('git diff and playwright', () => {
     assert.deepEqual(hits, ['completes checkout', 'pays with a card', 'signs in', 'signs out']);
   });
 });
-
-function writeProject(root: string): void {
-  mkdirSync(path.join(root, 'src/checkout'), { recursive: true });
-  mkdirSync(path.join(root, 'tests/checkout'), { recursive: true });
-  mkdirSync(path.join(root, 'docs'), { recursive: true });
-  writeFileSync(path.join(root, '.gitignore'), 'node_modules/\nran.txt\n');
-  writeFileSync(path.join(root, 'src/checkout/pay.ts'), 'export const amount = 1;\n');
-  writeFileSync(path.join(root, 'docs/guide.md'), '# guide\n');
-  writeFileSync(path.join(root, 'playwright.config.ts'), `import { defineConfig } from '@playwright/test';
-export default defineConfig({
-  testDir: './tests',
-  reporter: 'line',
-  workers: 1,
-  projects: [{ name: 'chromium' }],
-});
-`);
-  writeFileSync(path.join(root, 'playwright-smart-runner.config.ts'), `export default {
-  testDir: './tests',
-  baseBranch: 'main',
-  alwaysRunOnChange: ['@smoke'],
-  ignorePaths: ['docs/**', '**/*.md'],
-  passWithNoMappedTest: false,
-  unmappedChangeRun: ['@smoke'],
-  runMapping: [
-    {
-      changedPaths: ['src/checkout/**'],
-      runTests: ['tests/checkout/', 'completes checkout'],
-    },
-  ],
-};
-`);
-  writeFileSync(path.join(root, 'tests/checkout/pay.spec.ts'), `import { test } from '@playwright/test';
-import { hit } from '../record';
-test('completes checkout', () => hit('completes checkout'));
-test('pays with a card', () => hit('pays with a card'));
-`);
-  writeFileSync(path.join(root, 'tests/auth.spec.ts'), `import { test } from '@playwright/test';
-import { hit } from './record';
-test('signs in', { tag: '@smoke' }, () => hit('signs in'));
-test('signs out', { tag: '@smoke' }, () => hit('signs out'));
-test('shows help', () => hit('shows help'));
-`);
-  writeFileSync(path.join(root, 'tests/other.spec.ts'), `import { test } from '@playwright/test';
-import { hit } from './record';
-test('should stay quiet', () => hit('should stay quiet'));
-`);
-  writeFileSync(path.join(root, 'tests/record.ts'), `import { appendFileSync } from 'node:fs';
-export function hit(name: string): void {
-  appendFileSync(process.env.RAN_FILE ?? 'ran.txt', name + '\\n');
-}
-`);
-}
 
 function runRunner(cwd: string, args: string[] = []): { status: number | null; stdout: string; stderr: string } {
   const result = spawnSync(

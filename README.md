@@ -82,6 +82,10 @@ eval "npx playwright test $args --project=chromium"
 
 The empty check is required. An ignore-only diff exits 0 with no output, and `npx playwright test` without arguments would run the whole suite. A missing config value also exits 1 with no output, so check the status before treating empty output as a skip.
 
+## Sample
+
+`sample/` is a small Playwright app used by the end-to-end test. It maps `src/checkout/**` to `tests/checkout/` and always runs `@smoke`.
+
 ## CI
 
 The diff uses `git merge-base` against the base branch, then `git diff` from that commit. It does not diff against the tip of `main`. A shallow checkout often does not contain the merge base:
