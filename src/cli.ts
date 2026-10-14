@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import { existsSync, statSync } from 'node:fs';
+import { existsSync, realpathSync, statSync } from 'node:fs';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { ConfigError, loadConfig, resolveConfig, resolveConfigPath } from './config.js';
 import { listChangedPaths, repoRoot } from './git.js';
@@ -90,10 +90,17 @@ Print Playwright test arguments for changes since the base branch.
 `;
 }
 
-function invokedDirectly(): boolean {
-  const entry = process.argv[1];
+export function isDirectInvocation(entry: string | undefined, moduleUrl: string): boolean {
   if (!entry) return false;
-  return import.meta.url === pathToFileURL(path.resolve(entry)).href;
+  try {
+    return realpathSync(fileURLToPath(moduleUrl)) === realpathSync(entry);
+  } catch {
+    return false;
+  }
+}
+
+function invokedDirectly(): boolean {
+  return isDirectInvocation(process.argv[1], import.meta.url);
 }
 
 if (invokedDirectly()) {

@@ -25,6 +25,7 @@ export function listTests(repoRootPath: string, testDir: string): TestCase[] {
   const result = spawnSync(command.cmd, [...command.argsPrefix, 'test', '--list', '--reporter=json'], {
     cwd: repoRootPath,
     encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024,
   });
 
   if (result.error) {

@@ -27,9 +27,6 @@ export function selectArgs(
 
   const always = resolveTagList(config.alwaysRunOnChange, 'alwaysRunOnChange', tests);
   if (always.error) return { status: 'error', message: always.error };
-  if (always.tests.length === 0) {
-    return { status: 'error', message: 'alwaysRunOnChange resolved to 0 tests' };
-  }
 
   const matchedMappings = config.runMapping.filter((mapping) =>
     relevant.some((file) => mapping.changedPaths.some((pattern) => pathMatches(pattern, file))),

@@ -43,9 +43,9 @@ describe('selectArgs', () => {
     assert.deepEqual(selectArgs(['docs/guide.md', 'README.md'], config(), inventory, options), { status: 'skip' });
   });
 
-  it('fails when a real change has no alwaysRunOnChange tests', () => {
+  it('adds no extra tests when alwaysRunOnChange is omitted', () => {
     const result = selectArgs(['src/checkout/pay.ts'], config({ alwaysRunOnChange: [] }), inventory, options);
-    assert.deepEqual(result, { status: 'error', message: 'alwaysRunOnChange resolved to 0 tests' });
+    assert.deepEqual(result, { status: 'run', args: ['tests/checkout/'] });
   });
 
   it('fails when a used tag does not exist', () => {

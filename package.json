@@ -25,7 +25,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "test": "node --import tsx --test test/*.test.ts"
+    "test": "npm run build && node --import tsx --test test/*.test.ts"
   },
   "dependencies": {
     "jiti": "^2.6.1",

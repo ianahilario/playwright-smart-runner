@@ -41,7 +41,7 @@ export default defineConfig({
 
 `runTests` entries are a tag (`@checkout`), a directory (`tests/checkout/`), a spec file, or an exact test title. A directory or spec file runs every test in it. A tag or title becomes `file:line`, and `file:line:column` when two tests share a line.
 
-`alwaysRunOnChange` is included only when a change is outside `ignorePaths`. An empty diff, or a diff that only touches `ignorePaths`, prints nothing and exits 0. Those tags are not resolved.
+`alwaysRunOnChange` is included only when a change is outside `ignorePaths`. Omit it, or leave it empty, and no extra tests are added. An empty diff, or a diff that only touches `ignorePaths`, prints nothing and exits 0. Those tags are not resolved.
 
 `passWithNoMappedTest` looks only at `runMapping`. A changed spec file does not count as a mapped test. When no `changedPaths` entry matches, `false` exits 1 with `no mapped tests`. `true` uses `unmappedChangeRun`, or prints `testDir` once when that list is omitted.
 
