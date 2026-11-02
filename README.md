@@ -45,7 +45,7 @@ export default defineConfig({
 
 `passWithNoMappedTest` looks only at `runMapping`. A changed spec file does not count as a mapped test. When no `changedPaths` entry matches, `false` exits 1 with `no mapped tests`. `true` uses `unmappedChangeRun`, or prints `testDir` once when that list is omitted.
 
-`runChangedTests` defaults to `false`. When it is `true`, each changed `.spec.ts` file under `testDir` is added to the run list. A deleted spec is left out. If those spec files are the only relevant changes, they run with `alwaysRunOnChange` and do not count as an unmapped change.
+`runChangedTests` defaults to `false`. When it is `true`, each changed `.spec.ts` file under `testDir` is added to the run list. A deleted spec is left out and never counts as an unmapped change, including when other files in the diff are mapped. If deleted specs are the only relevant changes, the run is `alwaysRunOnChange`, or it is skipped when that list is empty.
 
 A missing config file, `testDir`, or a tag, directory, spec, or title that this run uses exits 1 and prints no arguments.
 
