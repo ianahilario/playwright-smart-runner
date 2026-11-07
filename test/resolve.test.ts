@@ -112,7 +112,32 @@ describe('selectArgs', () => {
       inventory,
       options,
     );
-    assert.deepEqual(deleted, { status: 'error', message: 'no mapped tests' });
+    assert.deepEqual(deleted, {
+      status: 'run',
+      args: ['tests/auth.spec.ts:12', 'tests/auth.spec.ts:40'],
+    });
+
+    const deletedWithoutAlways = selectArgs(
+      ['tests/deleted.spec.ts'],
+      config({ runChangedTests: true, alwaysRunOnChange: [] }),
+      inventory,
+      options,
+    );
+    assert.deepEqual(deletedWithoutAlways, { status: 'skip' });
+  });
+
+  it('does not treat a deleted spec as an unmapped change', () => {
+    const result = selectArgs(
+      ['src/checkout/pay.ts', 'tests/deleted.spec.ts'],
+      config({
+        alwaysRunOnChange: [],
+        unmappedChangeRun: ['@pair'],
+        runMapping: [{ changedPaths: ['src/checkout/**'], runTests: ['tests/checkout/pay.spec.ts'] }],
+      }),
+      inventory,
+      options,
+    );
+    assert.deepEqual(result, { status: 'run', args: ['tests/checkout/pay.spec.ts'] });
   });
 
   it('uses the unmapped fallback when passWithNoMappedTest is true', () => {

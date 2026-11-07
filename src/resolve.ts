@@ -40,9 +40,20 @@ export function selectArgs(
     : [];
 
   if (matchedMappings.length === 0) {
-    const hasNonSpecChange = relevant.some((file) => !isChangedSpec(file, config.testDir, tests));
-    if (specPieces.length > 0 && !hasNonSpecChange) {
+    const hasUnmappedChange = relevant.some(
+      (file) =>
+        !isChangedSpec(file, config.testDir, tests) &&
+        !isDeletedSpec(file, config.testDir, options.fileExists),
+    );
+    if (specPieces.length > 0 && !hasUnmappedChange) {
       return finish(always.tests, { pieces: specPieces }, tests);
+    }
+    const onlyDeletedSpecs =
+      relevant.length > 0 &&
+      relevant.every((file) => isDeletedSpec(file, config.testDir, options.fileExists));
+    if (onlyDeletedSpecs) {
+      if (always.tests.length === 0) return { status: 'skip' };
+      return finish(always.tests, { pieces: [] }, tests);
     }
     if (!config.passWithNoMappedTest) return { status: 'error', message: 'no mapped tests' };
     const extra = fallbackPieces(config, tests);
@@ -60,7 +71,10 @@ export function selectArgs(
   }
 
   const unmapped = relevant.filter(
-    (file) => !isSpec(file, tests) && !matchesAnyMapping(file, config),
+    (file) =>
+      !isDeletedSpec(file, config.testDir, options.fileExists) &&
+      !isSpec(file, tests) &&
+      !matchesAnyMapping(file, config),
   );
   if (unmapped.length > 0) {
     const extra = fallbackPieces(config, tests);
@@ -123,8 +137,21 @@ function changedSpecs(
 
 function isChangedSpec(file: string, testDir: string, tests: TestCase[]): boolean {
   const normalized = normalizeRepoPath(file);
-  if (!directoryCovers(testDir, normalized) || !normalized.endsWith('.spec.ts')) return false;
+  if (!looksLikeRepoSpec(normalized, testDir)) return false;
   return tests.some((test) => test.file === normalized);
+}
+
+function isDeletedSpec(
+  file: string,
+  testDir: string,
+  fileExists: (repoRelativePath: string) => boolean,
+): boolean {
+  const normalized = normalizeRepoPath(file);
+  return looksLikeRepoSpec(normalized, testDir) && !fileExists(normalized);
+}
+
+function looksLikeRepoSpec(file: string, testDir: string): boolean {
+  return directoryCovers(testDir, file) && file.endsWith('.spec.ts');
 }
 
 function isSpec(file: string, tests: TestCase[]): boolean {
